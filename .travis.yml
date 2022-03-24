@@ -1,0 +1,25 @@
+language: generic 
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t gastus35/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true gastus35/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t gastus35/multi-client ./client
+  - docker build -t gastus35/multi-nginx ./nginx
+  - docker build -t gastus35/multi-server ./server
+  - docker build -t gastus35/multi-worker ./worker
+
+  # Login to docker in one command
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Push images to docker hub
+  - docker push gastus35/multi-client
+  - docker push gastus35/multi-nginx
+  - docker push gastus35/multi-server
+  - docker push gastus35/multi-worker
